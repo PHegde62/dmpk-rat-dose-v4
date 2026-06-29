@@ -1,0 +1,11 @@
+# Slim runtime deps for the Cloud Run Streamlit app (app.py / dose_method_app.py).
+# Excludes the heavy training stack (torch, scikit-learn, PyTDC, mordred,
+# chembl_webresource_client) — those are only needed offline to build the
+# dataset and train the backends, not to serve the dose UI.
+streamlit>=1.30
+rdkit>=2023.9.5
+numpy>=1.26
+pandas>=2.0
+matplotlib>=3.7
+openpyxl>=3.1
+requests>=2.31

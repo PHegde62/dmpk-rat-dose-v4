@@ -1,0 +1,7 @@
+# V4 rat dose predictor - runtime dependencies (no ML / no torch).
+streamlit>=1.30
+rdkit>=2023.9.1
+pandas>=2.0
+numpy>=1.26
+openpyxl>=3.1
+requests>=2.31

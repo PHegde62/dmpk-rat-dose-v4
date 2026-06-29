@@ -1,0 +1,19 @@
+# Python / envs
+.venv/
+venv/
+__pycache__/
+*.pyc
+.env
+
+# Streamlit secrets (never commit; V4 takes CDD creds in-app at runtime)
+.streamlit/secrets.toml
+
+# Data / generated outputs (force-add specific ones with: git add -f <file>)
+*.sqlite
+*.pdf
+*.xlsx
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

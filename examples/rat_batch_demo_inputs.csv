@@ -1,0 +1,6 @@
+id,smiles,clint,clint_unit,matrix,fu_p,blood_plasma_ratio,papp,permeability_unit,sol,vd_rat
+CMPD-A,CC(=O)Oc1ccccc1C(=O)O,12,uL/min/mg,microsome,0.20,0.9,18,1e-6 cm/s,200,0.30
+CMPD-B,CC(C)NCC(O)COc1cccc2ccccc12,55,uL/min/mg,microsome,0.12,1.1,25,1e-6 cm/s,150,4.0
+CMPD-C,Cn1cnc2c1c(=O)n(C)c(=O)n2C,8,uL/min/mg,microsome,0.65,1.0,30,1e-6 cm/s,500,0.6
+CMPD-D,CC1=CC=CC=C1NC(=O)c1ccccc1,120,uL/min/mg,microsome,0.05,0.8,5,1e-6 cm/s,40,
+CMPD-BAD,not_a_smiles,10,uL/min/mg,microsome,0.2,1.0,10,1e-6 cm/s,100,1.0

@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dmpk-predictor"
+version = "0.1.0"
+description = "SMILES + experimental ADME -> human PK & dose prediction (IVIVE, allometry, dose projection)."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+dependencies = [
+    "pandas>=2.0",
+    "openpyxl>=3.1",
+]
+
+[project.optional-dependencies]
+chem = ["rdkit>=2023.9.1"]
+app = ["streamlit>=1.30"]
+dev = ["pytest>=7.0"]
+
+[tool.setuptools]
+packages = ["dmpk_predictor"]

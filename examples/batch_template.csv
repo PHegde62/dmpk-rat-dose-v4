@@ -1,0 +1,4 @@
+id,smiles,clint,clint_unit,matrix,fu_p,fu_p_unit,blood_plasma_ratio,permeability,permeability_unit,solubility,solubility_unit,vd_human,cl_rat,vd_rat,fu_rat,cl_dog,vd_dog,fu_dog,cl_cyno,vd_cyno,fu_cyno
+example_GEN,CC(=O)Oc1ccccc1C(=O)O,10,uL/min/mg,microsome,0.0182,fraction,0.78,120,nm/s,3000,ug/mL,,25.5,3.68,0.0125,9.05,4.72,0.0197,11.4,3.0,0.0211
+caffeine,CN1C=NC2=C1C(=O)N(C(=O)N2C)C,8,uL/min/mg,microsome,0.65,fraction,1.0,30,nm/s,,,,,,,,,,,,
+salicylic_acid,OC(=O)C1=CC=CC=C1O,5,uL/min/1e6 cells,hepatocyte,0.2,fraction,0.8,,,,,2.0,,,,,,,,,

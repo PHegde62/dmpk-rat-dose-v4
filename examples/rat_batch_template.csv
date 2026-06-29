@@ -1,0 +1,4 @@
+id,smiles,clint,clint_unit,matrix,clint_hep,fu_p,blood_plasma_ratio,papp,permeability_unit,sol,vd_rat,F_rat,cl_obs
+GEN-0001,CC(=O)Oc1ccccc1C(=O)O,12,uL/min/mg,microsome,5,0.20,0.9,18,1e-6 cm/s,200,0.30,,3.8
+GEN-0002,CC(C)NCC(O)COc1cccc2ccccc12,55,uL/min/mg,microsome,30,0.12,1.1,25,1e-6 cm/s,150,4.0,35,42
+GEN-0003,Cn1cnc2c1c(=O)n(C)c(=O)n2C,8,uL/min/mg,microsome,4,0.65,1.0,30,1e-6 cm/s,500,0.6,90,9
