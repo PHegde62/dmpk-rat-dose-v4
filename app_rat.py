@@ -30,8 +30,30 @@ st.set_page_config(page_title="DMPK Rat Dose Predictor", page_icon="🐀", layou
 
 CL_SOURCE_LABELS = {"Microsomes (RLM)": "microsome",
                     "Hepatocytes (RH)": "hepatocyte",
-                    "Direct rat CL (mL/min/kg)": "direct"}
+                    "Direct rat CL (mL/min/kg)": "direct",
+                    "fu-calibrated (empirical)": "fu_empirical"}
 VSS_LABELS = ["Measured rat Vss", "Øie–Tozer (rat)"]
+
+# Tooltip + footnote text explaining each dropdown so the choice is unambiguous.
+CL_SOURCE_HELP = (
+    "How rat clearance (CL) — which drives the dose — is estimated:\n\n"
+    "• **Microsomes (RLM)** — scale rat liver-microsome CLint through the well-stirred IVIVE model.\n"
+    "• **Hepatocytes (RH)** — same well-stirred IVIVE from rat hepatocyte CLint (captures some non-CYP / uptake routes microsomes miss).\n"
+    "• **Direct rat CL** — you type a measured/known rat CL (mL/min/kg); IVIVE is bypassed.\n"
+    "• **fu-calibrated (empirical)** — predict CL from plasma fu via a series-calibrated fit, *not* from CLint. "
+    "Use when in-vitro CLint does not rank your series well (validated on NIK: restored compound ranking). "
+    "Re-fit the calibration per series and supply a reliable fu."
+)
+CL_SOURCE_FOOTNOTE = (
+    "**CL source:** Microsomes / Hepatocytes = IVIVE from in-vitro CLint · "
+    "Direct = your measured rat CL · "
+    "fu-calibrated = CL predicted from fu (series-calibrated; best for *ranking* when CLint does not discriminate)."
+)
+VSS_HELP = ("Volume of distribution used for half-life and the profile. "
+            "**Measured rat Vss** (from rat IV PK) is preferred; **Øie–Tozer (rat)** is a fu-based estimate used only when no measured Vss is given.")
+TARGET_HELP = ("What free-drug exposure the dose must hit: **Cmin** = trough kept above target · "
+               "**Cmax** = peak · **AUC** = total exposure over the interval. "
+               "For short-half-life compounds prefer **AUC** (a trough target can blow the dose up).")
 
 
 def pf(key, default):
@@ -146,10 +168,12 @@ with tab_ws:
 
     with c_sel:
         st.subheader("Method & target")
-        cl_source_label = st.selectbox("In vitro CL source", list(CL_SOURCE_LABELS.keys()), index=0)
+        cl_source_label = st.selectbox("In vitro CL source", list(CL_SOURCE_LABELS.keys()),
+                                       index=0, help=CL_SOURCE_HELP)
         cl_source = CL_SOURCE_LABELS[cl_source_label]
-        vss_method = st.selectbox("Vss method", VSS_LABELS, index=0)
-        target_type = st.selectbox("Target", ["Cmin", "Cmax", "AUC"], index=0)
+        st.caption(CL_SOURCE_FOOTNOTE)
+        vss_method = st.selectbox("Vss method", VSS_LABELS, index=0, help=VSS_HELP)
+        target_type = st.selectbox("Target", ["Cmin", "Cmax", "AUC"], index=0, help=TARGET_HELP)
         target_free = st.number_input("Free target (nM) — or free AUC (nM·h)", value=50.0, min_value=0.0)
         interval = st.selectbox("Dosing interval", ["QD (24 h)", "BID (12 h)", "custom"], index=1)
         tau = {"QD (24 h)": 24.0, "BID (12 h)": 12.0}.get(interval)
@@ -271,10 +295,12 @@ with tab_batch:
                "present in the file override / fill gaps. Template: examples/rat_batch_template.csv")
     up = st.file_uploader("Compounds CSV", type=["csv"], key="batch_up")
     b1, b2, b3, b4 = st.columns(4)
-    b_src = b1.selectbox("CL source", list(CL_SOURCE_LABELS.keys()), index=0, key="b_src")
-    b_tt = b2.selectbox("Target", ["Cmin", "Cmax", "AUC"], index=0, key="b_tt")
+    b_src = b1.selectbox("CL source", list(CL_SOURCE_LABELS.keys()), index=0, key="b_src",
+                         help=CL_SOURCE_HELP)
+    b_tt = b2.selectbox("Target", ["Cmin", "Cmax", "AUC"], index=0, key="b_tt", help=TARGET_HELP)
     b_free = b3.number_input("Free target (nM)", value=50.0, min_value=0.0, key="b_free")
     b_tau = b4.number_input("τ (h)", value=12.0, min_value=0.5, key="b_tau")
+    st.caption(CL_SOURCE_FOOTNOTE)
     use_cdd = st.checkbox("Pull ADME from CDD (needs credentials in sidebar)",
                           value=bool(cdd_vault and cdd_token))
     if up is not None and st.button("Run batch", type="primary"):
