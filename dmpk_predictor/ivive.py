@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from .binding import resolve_fu_inc
-from .config import PHYSIOLOGY, Assumptions, DEFAULTS
+from .config import PHYSIOLOGY, Assumptions, DEFAULTS, IVIVE_RECOVERY_FACTOR
 
 
 @dataclass
@@ -45,13 +45,14 @@ def well_stirred(
     fu_p: float,               # fraction unbound in plasma
     blood_plasma_ratio: float,
     qh: float,                 # hepatic blood flow, mL/min/kg
+    recovery_factor: float = IVIVE_RECOVERY_FACTOR,  # empirical IVIVE recovery (1.0 = off)
 ) -> dict:
     """Blood-based well-stirred model from an already-scaled (mL/min/kg) CLint.
 
     Returns clh_blood, clh_plasma, cl_u_int, fu_blood and the hepatic extraction
     ratio E_H (= clh_blood / qh).
     """
-    cl_u_int = clint_liver / fu_inc
+    cl_u_int = (clint_liver / fu_inc) * recovery_factor
     fu_b = fu_p / blood_plasma_ratio
     clh_blood = (qh * fu_b * cl_u_int) / (qh + fu_b * cl_u_int)
     return {
@@ -97,7 +98,7 @@ def predict_hepatic_cl(
     )
 
     clint_scaled = clint_in_vitro * per_liver * phys.lw_per_bw / 1000.0
-    cl_u_int = clint_scaled / fu_inc
+    cl_u_int = (clint_scaled / fu_inc) * IVIVE_RECOVERY_FACTOR
 
     fup = _apply_fup_floor(fu_p, assumptions)
     fu_b = fup / blood_plasma_ratio
