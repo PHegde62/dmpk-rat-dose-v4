@@ -71,6 +71,23 @@ def fu_t_from_logp(logp: float, fu_p: float) -> float:
     return max(min(fu_p / factor, fu_p), 1e-4)
 
 
+def fu_t_from_fuinc(logp: float, logd: float, ionisation_class: str = "neutral",
+                    matrix: str = "microsome", species: str = "rat") -> float:
+    """Mechanistic tissue fu,t for the PRE-SYNTHESIS module (ML-only inputs).
+
+    fu,t = FUT_FUINC_SCALAR[species] * fu,inc, where fu,inc is the Austin (microsome)
+    or Kilford (hepatocyte) incubation unbound fraction predicted from lipophilicity.
+    No measured binding and no observed Vss are needed at prediction time - only the
+    one-time calibrated scalar. Bounded to (0, 1].
+    """
+    from .binding import fu_mic, fu_hep
+    from .config import FUT_FUINC_SCALAR
+    fu_inc = fu_mic(logp, logd, ionisation_class) if matrix == "microsome" \
+        else fu_hep(logp, logd, ionisation_class)
+    k = FUT_FUINC_SCALAR.get(species.strip().lower(), 0.010)
+    return max(min(k * fu_inc, 1.0), 1e-6)
+
+
 def predict_vd(
     method: str,
     *,
@@ -83,7 +100,11 @@ def predict_vd(
     fu_p: Optional[float] = None,
     fu_t: Optional[float] = None,
     logp: Optional[float] = None,
+    logd: Optional[float] = None,
+    ionisation_class: str = "neutral",
     use_logp_for_fut: bool = False,
+    fut_from_austin: bool = False,   # PRE-SYNTHESIS: fu,t from Austin/Kilford fu,inc
+    fut_matrix: str = "microsome",
     # ml passthrough
     ml_value: Optional[float] = None,
     # target species for the Øie–Tozer physiological volumes (V4: 'rat')
@@ -97,7 +118,11 @@ def predict_vd(
         return VdResult(vd_human=float(ml_value), method="ml", detail="Nucleus ML")
     if method == "oie_tozer":
         ft = fu_t
-        if use_logp_for_fut and logp is not None and fu_p:
+        if fut_from_austin and fu_p:
+            lp = logp if logp is not None else logd
+            ld = logd if logd is not None else logp
+            ft = fu_t_from_fuinc(lp, ld, ionisation_class, fut_matrix, species)
+        elif use_logp_for_fut and logp is not None and fu_p:
             ft = fu_t_from_logp(logp, fu_p)
         return oie_tozer(fu_p, ft, species=species)
     if method == "animal":
