@@ -51,6 +51,30 @@ logger = logging.getLogger("dmpk_predictor.rat_dose")
 _MICRO = {"microsome", "microsomes", "mic", "rlm", "liver microsomes"}
 _HEP = {"hepatocyte", "hepatocytes", "hep", "rh"}
 _DIRECT = {"direct", "cl_direct", "predicted rat cl", "direct rat cl", "measured cl"}
+_FU_EMP = {"fu_empirical", "fu-calibrated", "fu_calibrated", "fu", "empirical_fu"}
+
+# --- fu-calibrated empirical clearance ---------------------------------------
+# Validated on the NIK rat set (n=27): the well-stirred IVIVE could not RANK
+# compounds (Spearman ~ 0) because in vitro CLint had little dynamic range, while
+# plasma fu tracked observed CL strongly (Spearman +0.71). An fu-calibrated CL
+# restored ranking (held-out Spearman ~ 0.7, GMFE ~ 1.5).
+#   log10(CL_mL/min/kg) = b0 + b1*log10(fu_p) [+ b2*logD]
+# IMPORTANT: these coefficients are NIK-specific. RE-FIT per chemical series with
+# fit_fu_calibration() (see scripts) and update FU_CL_CALIB before relying on it
+# for another project. It is offered as a selectable CL source, not the default.
+FU_CL_CALIB = {"b0": 2.023, "b1": 0.551, "b2_logD": 0.0, "series": "NIK (n=27)"}
+
+
+def cl_from_fu(fu_p, logd=None, calib=None):
+    """Empirical rat plasma CL (mL/min/kg) from fu (and optionally logD)."""
+    import math
+    c = calib or FU_CL_CALIB
+    if fu_p is None or fu_p <= 0:
+        return None
+    log_cl = c["b0"] + c["b1"] * math.log10(fu_p)
+    if logd is not None and c.get("b2_logD"):
+        log_cl += c["b2_logD"] * logd
+    return 10 ** log_cl
 
 
 def _num(v):
@@ -144,8 +168,8 @@ def predict_rat_dose(
             adme["clint"] = None
         if "fu_hep" in adme and adme.get("fu_hep") is not None and "fu_inc" not in adme:
             adme["fu_inc"] = adme["fu_hep"]
-    elif src in _DIRECT:
-        adme.pop("clint", None)  # direct CL bypasses IVIVE
+    elif src in _DIRECT or src in _FU_EMP:
+        adme.pop("clint", None)  # direct / fu-empirical CL bypasses IVIVE
 
     try:
         std = standardise_adme(adme, mw=feats.mw, scaling=scaling)
@@ -158,6 +182,7 @@ def predict_rat_dose(
         return out
 
     direct = src in _DIRECT
+    empirical = src in _FU_EMP
     clint_scaled = cl_u_int = fu_inc = None
 
     if direct:
@@ -166,6 +191,14 @@ def predict_rat_dose(
             out["error"] = "cl_source='direct' requires a rat CL in 'cl_direct' (mL/min/kg)"
             return out
         cl_plasma = cl_direct
+        clh_blood = cl_plasma / std.blood_plasma_ratio
+        eh = min(max(clh_blood / qh, 0.0), 0.999)
+    elif empirical:
+        cl_plasma = cl_from_fu(std.fu_p, feats.logd)
+        if cl_plasma is None:
+            out["error"] = "cl_source='fu_empirical' requires a positive rat fu_p"
+            return out
+        out["fu_cl_calib"] = FU_CL_CALIB.get("series")
         clh_blood = cl_plasma / std.blood_plasma_ratio
         eh = min(max(clh_blood / qh, 0.0), 0.999)
     else:
@@ -240,7 +273,7 @@ def predict_rat_dose(
         ivive_fold = max(cl_plasma, cl_obs_v) / min(cl_plasma, cl_obs_v)
 
     out.update({
-        "matrix": std.matrix if not direct else "direct",
+        "matrix": ("fu-empirical" if empirical else ("direct" if direct else std.matrix)),
         "fu_inc": fu_inc,
         "fu_p": std.fu_p,
         "blood_plasma_ratio": std.blood_plasma_ratio,
