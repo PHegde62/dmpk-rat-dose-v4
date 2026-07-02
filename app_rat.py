@@ -76,6 +76,13 @@ with st.sidebar:
              "fu,t calibration. Rat is the validated default; mouse uses Nucleus mouse "
              "ML models directly (same-species); human is provisional. Note: CDD auto-fill "
              "pulls RAT readouts regardless of this setting.")
+    if species == "human":
+        try:
+            st.switch_page("pages/2_Human_dose_allometry.py")
+        except Exception:
+            st.info("Human dose prediction (single/multi-species allometry, Oie-Tozer, "
+                    "Nucleus ML) is on the **Human dose allometry** page - open it in the sidebar.")
+            st.stop()
     st.divider()
     st.header("CDD Vault (optional)")
     use_cdd_global = st.checkbox("Connect to CDD to auto-fill rat ADME", value=False,
