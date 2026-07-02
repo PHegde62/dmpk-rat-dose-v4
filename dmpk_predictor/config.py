@@ -109,10 +109,13 @@ class OieTozerVolumes:
 # geometric-mean ratio fu,t / fu,inc) and deploy on new compounds - this keeps the
 # pre-synthesis module ML-only (no measured binding needed). Re-fit per species /
 # program. Rat (NIK+PI3K, microsome route, LOO): ~0.010 -> AFE 1.0, GMFE 1.95.
-FUT_FUINC_SCALAR: Dict[str, float] = {"rat": 0.010, "human": 0.010}
+FUT_FUINC_SCALAR: Dict[str, float] = {"mouse": 0.008, "rat": 0.010, "human": 0.010}
 
 
 OIE_TOZER: Dict[str, OieTozerVolumes] = {
     "human": OieTozerVolumes(vp=0.0436, ve=0.151, vr=0.380, re_i=1.4),
     "rat":   OieTozerVolumes(vp=0.0312, ve=0.200, vr=0.364, re_i=1.4),
+    # Mouse volumes (L/kg): plasma ~0.05, interstitial ~0.23, remainder ~0.42
+    # (sum ~0.70 = mouse total body water); Re/i held at 1.4.
+    "mouse": OieTozerVolumes(vp=0.05, ve=0.23, vr=0.42, re_i=1.4),
 }

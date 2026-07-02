@@ -70,6 +70,13 @@ def _cached_cdd(ident, is_smiles, vault, token, agg):
 # Sidebar
 # --------------------------------------------------------------------------- #
 with st.sidebar:
+    species = st.selectbox(
+        "Target species", ["rat", "mouse", "human"], index=0,
+        help="Switches physiology (Qh, liver, MPPGL/HPGL), Oie-Tozer volumes and the "
+             "fu,t calibration. Rat is the validated default; mouse uses Nucleus mouse "
+             "ML models directly (same-species); human is provisional. Note: CDD auto-fill "
+             "pulls RAT readouts regardless of this setting.")
+    st.divider()
     st.header("CDD Vault (optional)")
     use_cdd_global = st.checkbox("Connect to CDD to auto-fill rat ADME", value=False,
                                  help="Off by default — the tool works fully without CDD. "
@@ -204,7 +211,7 @@ with tab_ws:
 
         res = predict_rat_dose(
             smiles, adme, target_type=target_type, target_free=target_free,
-            tau_hours=tau, ka_per_h=ka, cl_source=cl_source,
+            tau_hours=tau, ka_per_h=ka, cl_source=cl_source, species=species,
             cl_obs=(cl_obs or None),
             logd=(float(logd_in) if logd_in.strip() else None),
             ionisation_class=(None if ion == "(auto)" else ion))
@@ -310,7 +317,8 @@ with tab_batch:
         with st.spinner(f"Running {len(raw)} compounds…"):
             df, profiles = run_rat_batch(
                 raw, target_type=b_tt, target_free_nM=b_free, tau_hours=b_tau,
-                cl_source=CL_SOURCE_LABELS[b_src], use_cdd=use_cdd, settings=settings)
+                cl_source=CL_SOURCE_LABELS[b_src], use_cdd=use_cdd, settings=settings,
+                species=species)
         ok = int(df["error"].isna().sum()) if "error" in df else len(df)
         st.success(f"{len(df)} compounds · {ok} succeeded · {len(profiles)} profiles")
         show = [c for c in ["id", "mw", "cl_source", "cl_rat_plasma_mL_min_kg",
