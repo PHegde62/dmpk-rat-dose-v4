@@ -59,6 +59,24 @@ NEUTRAL = "neutral"
 
 
 # --------------------------------------------------------------------------- #
+# In vitro incubation conditions for the Austin/Kilford fu,inc predictions.
+# IMPORTANT: set these to the ACTUAL concentrations used in the assay that
+# generated CLint, so the binding correction matches the experiment. Defaults
+# reproduce the beta-2 workbook (0.5 mg/mL microsomes; 0.3125 hepatocyte term).
+# --------------------------------------------------------------------------- #
+MICROSOME_PROTEIN_MG_PER_ML: float = 0.5     # mg microsomal protein / mL
+HEPATOCYTE_CELL_TERM: float = 125.0 * 0.0025  # = 0.3125 (Kilford cell-volume term)
+
+# Optional empirical IVIVE recovery factor applied to the predicted UNBOUND
+# intrinsic clearance to correct residual systematic under-prediction of CL.
+# 1.0 = OFF (default, no change). If you enable it, anchor it on a reference set
+# of compounds with known in-vivo CL; do NOT fit it on the compounds you are
+# predicting (that would be data leakage). Rat NIK+PI3K (mouse-ML inputs) showed
+# a residual ~1.3x under-prediction on the microsome path, i.e. a factor ~1.3.
+IVIVE_RECOVERY_FACTOR: float = 1.0
+
+
+# --------------------------------------------------------------------------- #
 # V4 - target species for dose prediction.
 # V1-V3 predicted a HUMAN dose (scaling animal data up to human). V4 predicts a
 # RAT dose directly: rat in vitro / in vivo data -> rat CL, Vss, F, dose, with NO
@@ -83,6 +101,17 @@ class OieTozerVolumes:
 # physiological volumes (plasma ~0.0312 L/kg; extracellular ~0.20 L/kg). Re/i is
 # held at 1.4 (albumin distribution is not strongly species-dependent). These are
 # documented, adjustable defaults - PREFER a measured rat Vss when one exists.
+# Pre-synthesis Vss: the tissue unbound fraction fu,t is derived MECHANISTICALLY
+# from lipophilicity via the Austin/Kilford incubation-binding curve (binding.py),
+# then scaled to whole tissue by a single calibrated constant:
+#     fu,t = FUT_FUINC_SCALAR[species] * fu,inc(logP/logD)
+# Calibrate ONCE on a training set (back-calculate fu,t from observed Vss, take the
+# geometric-mean ratio fu,t / fu,inc) and deploy on new compounds - this keeps the
+# pre-synthesis module ML-only (no measured binding needed). Re-fit per species /
+# program. Rat (NIK+PI3K, microsome route, LOO): ~0.010 -> AFE 1.0, GMFE 1.95.
+FUT_FUINC_SCALAR: Dict[str, float] = {"rat": 0.010, "human": 0.010}
+
+
 OIE_TOZER: Dict[str, OieTozerVolumes] = {
     "human": OieTozerVolumes(vp=0.0436, ve=0.151, vr=0.380, re_i=1.4),
     "rat":   OieTozerVolumes(vp=0.0312, ve=0.200, vr=0.364, re_i=1.4),
