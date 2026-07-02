@@ -83,7 +83,7 @@ IVIVE_RECOVERY_FACTOR: float = 1.0
 # cross-species allometry (the target species IS rat). Change TARGET_SPECIES to
 # scale the whole tool to another species; every constant below is keyed by it.
 # --------------------------------------------------------------------------- #
-TARGET_SPECIES = "mouse"   # V6: evaluate MOUSE PK (mouse ML models -> mouse PK, same-species)
+TARGET_SPECIES = "rat"
 
 
 @dataclass(frozen=True)
