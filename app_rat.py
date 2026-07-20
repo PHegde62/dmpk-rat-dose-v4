@@ -25,6 +25,10 @@ from dmpk_predictor.rat_batch import run_rat_batch
 from dmpk_predictor.rat_export import rat_batch_to_excel_bytes
 from dmpk_predictor.cdd_client import fetch_adme_from_cdd, CDDError
 from dmpk_predictor.cdd_config import CDDSettings
+try:
+    from dmpk_predictor import nucleus_ml
+except Exception:
+    nucleus_ml = None
 
 st.set_page_config(page_title="DMPK Rat Dose Predictor", page_icon="🐀", layout="wide")
 
@@ -112,6 +116,28 @@ tab_ws, tab_batch = st.tabs(["Worksheet (single compound)", "Batch upload"])
 # Worksheet tab
 # --------------------------------------------------------------------------- #
 with tab_ws:
+    # --- Pre-synthesis: live Nucleus ML autofill from SMILES ---
+    with st.expander("Auto-fill from Nucleus ML (SMILES) - pre-synthesis", expanded=False):
+        if nucleus_ml is None or not getattr(nucleus_ml, "NUCLEUS_AVAILABLE", False):
+            st.info("Nucleus ML live predictions need the internal inference env "
+                    "(deep-affinity conda + W&B/GCS auth; e.g. source ~/.cursor/env.sh prod). "
+                    "Unavailable on this deployment - use CDD auto-fill or manual entry.")
+        else:
+            nuc_smi = st.text_input("SMILES", key="nuc_smiles")  # smiles-ok
+            if st.button("Predict ADME from Nucleus ML") and nuc_smi.strip():
+                try:
+                    out = nucleus_ml.predict_adme_for_engine(nuc_smi.strip(), species=species)
+                    a = out.get("adme", {}); p = {"smiles": nuc_smi.strip()}
+                    if "clint" in a: p["clint_mic"] = a["clint"]["value"]
+                    if "clint_hep" in a: p["clint_hep"] = a["clint_hep"]["value"]
+                    if "fu_p" in a: p["fu_p"] = a["fu_p"]["value"]
+                    if out.get("logd") is not None: p["logd"] = out["logd"]
+                    st.session_state["pf"] = p
+                    st.success("Filled from Nucleus ML (" + species + "): " + ", ".join(k for k in p if k != "smiles"))
+                    st.rerun()
+                except Exception as exc:
+                    st.error("Nucleus ML error: " + str(exc))
+
     with st.expander("⚡ Auto-fill rat ADME from CDD (optional — GEN-ID or SMILES)", expanded=False):
         if not use_cdd_global:
             st.info("CDD is off. Tick **Connect to CDD** in the sidebar and enter your Vault "
